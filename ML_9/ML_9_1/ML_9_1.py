@@ -13,8 +13,8 @@ from sklearn.metrics import mean_absolute_error
 import os
 
 #df_test.csv,df_train.csvを取得
-df_test_path = "/home/gakubu/デスクトップ/python_git/my_project/ML_9/df_test.csv"
-df_train_path = "/home/gakubu/デスクトップ/python_git/my_project/ML_9/df_train.csv"
+df_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv"
+df_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv"
 df_test = pd.read_csv(df_test_path)
 df_train = pd.read_csv(df_train_path)
 
@@ -33,8 +33,8 @@ scaled_X_train = pd.DataFrame(X_train_sc, columns=X_train.columns)
 scaled_X_test = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
 
 #csvファイルとして出力
-scaled_X_train.to_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_1/scaled_X_train.csv",encoding='utf_8_sig', index=False)
-scaled_X_test.to_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_1/scaled_X_test.csv",encoding='utf_8_sig', index=False)
+scaled_X_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/scaled_X_train.csv",encoding='utf_8_sig', index=False)
+scaled_X_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/scaled_X_test.csv",encoding='utf_8_sig', index=False)
 
 #モデルの作成と適用
 model = linear_model.LinearRegression()
@@ -52,7 +52,7 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
-df_ee.to_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_1/Error Evaluation.csv",encoding='utf_8_sig', index=False)
+df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/Error Evaluation.csv",encoding='utf_8_sig', index=False)
 # #決定係数について
 # print('R^2(決定係数)')
 # print(r2_score(y_test, y_test_pred))
@@ -78,7 +78,7 @@ df_test_forfig['residuals'] = df_test_forfig['predict values'] - df_test_forfig[
 
 #'legend'列を追加(凡例)
 
-root_directory = "/home/gakubu/デスクトップ/python_git/my_project/ML_9/"
+root_directory = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"
 for folder_name in os.listdir(root_directory):  
     for index,row in df_train_forfig.iterrows() :           #１行ずつ実行
         if folder_name in row['case_name']:                 #case_nameに'folder_nameが含まれているかどうか
@@ -87,7 +87,7 @@ for folder_name in os.listdir(root_directory):
 df_test_forfig['legend'] = 'Test data'
 
 df_forfig = pd.concat([df_train_forfig, df_test_forfig])
-df_forfig.to_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_1/df_forfig.csv"\
+df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig.csv"\
                         ,encoding='utf_8_sig', index=False)
 
 #図の作成
@@ -119,7 +119,7 @@ plt.legend(handles=handles, loc='upper left')
 
 
 plt.title('Error Evaluation')
-plt.savefig("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_1/Error Evaluation.pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/Error Evaluation.pdf", format='pdf') 
 # plt.show()
 
 

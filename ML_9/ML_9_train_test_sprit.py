@@ -3,7 +3,7 @@ import pandas as pd
 
     #csvファイルをpandasを使って読み込む
     #csvファイルが保存されているルートディレクトリのパス
-root_directory = "/home/gakubu/デスクトップ/python_git/my_project/ML_9/"
+root_directory = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"
     #各officeのinputdataをデータフレームとして読み込む
     #フォルダごとに処理を繰り返す
 for folder_name in os.listdir(root_directory):
@@ -28,7 +28,7 @@ for folder_name in os.listdir(root_directory):
     #作成されたすべてのデータフレームの名前を取得
 df_names = [var_name for var_name in globals() if isinstance(globals()[var_name], pd.DataFrame)]
     #countfrom2secpatientAverage.csvをデータフレームとして読み込む
-df_count_from2sec = pd.read_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/"\
+df_count_from2sec = pd.read_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"\
                                 "count_from2sec_patientAverage.csv", header=0)
 dfc = df_count_from2sec
     ##ここまでで必要なデータはすべて読み込み済み
@@ -70,5 +70,5 @@ df_train = X[condition2]
 print(df_test)
 print(df_train)
 #df_test,df_trainをcsvファイルとして出力
-df_test.to_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/df_test.csv",encoding='utf_8_sig', index=False)
-df_train.to_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/df_train.csv", encoding='utf_8_sig', index=False)
+df_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv",encoding='utf_8_sig', index=False)
+df_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv", encoding='utf_8_sig', index=False)

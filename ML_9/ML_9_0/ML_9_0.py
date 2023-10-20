@@ -5,7 +5,7 @@ import seaborn as sns
 
 #csvファイルをpandasを使って読み込む
 #csvファイルが保存されているルートディレクトリのパス
-root_directory = "/home/gakubu/デスクトップ/python_git/my_project/ML_9/"
+root_directory = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"
 #各officeのinputdataをデータフレームとして読み込む
 #フォルダごとに処理を繰り返す
 for folder_name in os.listdir(root_directory):
@@ -41,7 +41,7 @@ df_names = [var_name for var_name in globals() if isinstance(globals()[var_name]
 
 
 #countfrom2secpatientAverage.csvをデータフレームとして読み込む
-df_count_from2sec = pd.read_csv("/home/gakubu/デスクトップ/python_git/my_project/ML_9/"\
+df_count_from2sec = pd.read_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"\
                                 "count_from2sec_patientAverage.csv", header=0)
 dfc = df_count_from2sec
 
@@ -87,7 +87,7 @@ dfc['office_num'] = dfc['office_name'].map(office_color_mapping)
 dfc.plot.scatter(x='RoI', y='office_name', c=dfc['office_num'])
 plt.title('RoI for each office')
 #plt.show()
-plt.savefig("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_0/RoI for each office.pdf", format='pdf')       
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_0/RoI for each office.pdf", format='pdf')       
 
 
 # casename,case_name列をキーにしてinputdataとdfcのRoI列を結合
@@ -126,7 +126,7 @@ for variable_name in df_names:
 #     #plt.show()
 #     # ファイル名を組み立てて保存
 #     file_name = f"Correlation_Heatmap_{office}.pdf"
-#     save_path = "/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_0/" + file_name   
+#     save_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_0/" + file_name   
 #     plt.savefig(save_path, format='pdf')
 #     plt.close()
 
@@ -152,7 +152,7 @@ plt.figure(figsize=(8, 6))
 sns.heatmap(correlation_matrix, cmap='seismic', fmt=".2f", linewidths=0.5)
 plt.title("Correlation Heatmap")
 #plt.show()  
-plt.savefig("/home/gakubu/デスクトップ/python_git/my_project/ML_9/ML_9_0/Correlation Heatmap.pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_0/Correlation Heatmap.pdf", format='pdf') 
 plt.close()
 
 
