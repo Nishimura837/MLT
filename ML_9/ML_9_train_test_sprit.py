@@ -85,9 +85,7 @@ X_test_sc = scaler.transform(X_test)
 X_train = pd.DataFrame(X_train_sc, columns=X_train.columns)
 X_test = pd.DataFrame(X_test_sc, columns=X_test.columns)
 
-
-
-#X_train,y_train,X_test,y_testをcsvファイルとして出力
+#標準化されたデータX_train,y_train,X_test,y_testをcsvファイルとして出力
 X_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_train.csv", encoding='utf_8_sig', index=False)
 y_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_train.csv", encoding='utf_8_sig', index=False)
 X_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_test.csv",encoding='utf_8_sig', index=False)
