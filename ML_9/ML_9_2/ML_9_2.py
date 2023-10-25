@@ -52,7 +52,7 @@ x_train_poly = polynomial_features.fit_transform(X_train)
 x_test_poly = polynomial_features.transform(X_test)
 
 
-# y = b0 + b1x + b2x^2 の b0～b2 を算出
+#モデルの適合
 model = LinearRegression()
 model.fit(x_train_poly, y_train)
 y_train_pred = model.predict(x_train_poly)
