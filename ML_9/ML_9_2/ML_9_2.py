@@ -1,6 +1,5 @@
 # 多項式回帰分析
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -11,25 +10,19 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 
-#df_test.csv,df_train.csvを取得
-df_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv"
+#test.csv,train.csvを取得
+X_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_train.csv"
+y_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_train.csv"
+X_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_test.csv"
+y_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_test.csv"
 df_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv"
-df_test = pd.read_csv(df_test_path)
+df_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv"
+X_train = pd.read_csv(X_train_path)
+y_train = pd.read_csv(y_train_path)
+X_test = pd.read_csv(X_test_path)
+y_test = pd.read_csv(y_test_path)
 df_train = pd.read_csv(df_train_path)
-
-X_train = df_train.drop(columns=['case_name', 'RoI'])
-y_train = df_train["RoI"]
-X_test = df_test.drop(columns=['case_name', 'RoI'])
-y_test = df_test["RoI"]
-
-
-#説明変数が複数存在するため、説明変数を標準化する
-scaler = StandardScaler()
-X_train_sc = scaler.fit_transform(X_train)
-
-# 標準化されたデータを新しいデータフレームに格納
-scaled_X_train = pd.DataFrame(X_train_sc, columns=X_train.columns)
-scaled_X_test = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
+df_test = pd.read_csv(df_test_path)
 
 #k分割交差検証によってハイパーパラメータ(degree)を決定する
 print('start cross_val')
@@ -40,7 +33,7 @@ best_score = -np.inf
 
 for degree in degrees:
     model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    scores = cross_val_score(model, scaled_X_train , y_train, cv=10, scoring='r2')  # 10分割交差検証でR-squaredスコアを計算
+    scores = cross_val_score(model, X_train , y_train, cv=10, scoring='r2')  # 10分割交差検証でR-squaredスコアを計算
     mean_score = scores.mean()  # 10分割の平均スコアを計算
 
     print(degree)
@@ -50,12 +43,13 @@ for degree in degrees:
         best_degree = degree
 
 print('end cross_val')
+print('best degree')
 print(best_degree)
 
 # 多項式回帰を行う
 polynomial_features= PolynomialFeatures(degree=best_degree)
-x_train_poly = polynomial_features.fit_transform(scaled_X_train)
-x_test_poly = polynomial_features.transform(scaled_X_test)
+x_train_poly = polynomial_features.fit_transform(X_train)
+x_test_poly = polynomial_features.transform(X_test)
 
 
 # y = b0 + b1x + b2x^2 の b0～b2 を算出

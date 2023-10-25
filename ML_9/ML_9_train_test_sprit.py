@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
     #csvファイルをpandasを使って読み込む
     #csvファイルが保存されているルートディレクトリのパス
@@ -69,6 +70,27 @@ condition2 = ~X['case_name'].str.contains('office10')
 df_train = X[condition2]
 print(df_test)
 print(df_train)
-#df_test,df_trainをcsvファイルとして出力
+
+X_train = df_train.drop(columns=['case_name', 'RoI'])
+y_train = df_train["RoI"]
+X_test = df_test.drop(columns=['case_name', 'RoI'])
+y_test = df_test["RoI"]
+
+#説明変数が複数存在するため、説明変数を標準化する
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc = scaler.transform(X_test)
+
+# 標準化されたデータを新しいデータフレームに格納
+X_train = pd.DataFrame(X_train_sc, columns=X_train.columns)
+X_test = pd.DataFrame(X_test_sc, columns=X_test.columns)
+
+
+
+#X_train,y_train,X_test,y_testをcsvファイルとして出力
+X_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_train.csv", encoding='utf_8_sig', index=False)
+y_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_train.csv", encoding='utf_8_sig', index=False)
+X_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_test.csv",encoding='utf_8_sig', index=False)
+y_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_test.csv",encoding='utf_8_sig', index=False)
+df_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv",encoding='utf_8_sig', index=False)
 df_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv",encoding='utf_8_sig', index=False)
-df_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv", encoding='utf_8_sig', index=False)

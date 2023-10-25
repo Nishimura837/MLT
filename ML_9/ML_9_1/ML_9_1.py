@@ -1,6 +1,5 @@
 # 線形重回帰分析
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 # 線形モデル
 from sklearn import linear_model
@@ -9,40 +8,30 @@ import numpy as np
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
-
 import os
 
-#df_test.csv,df_train.csvを取得
-df_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv"
+#test.csv,train.csvを取得
+X_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_train.csv"
+y_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_train.csv"
+X_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_test.csv"
+y_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_test.csv"
 df_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv"
-df_test = pd.read_csv(df_test_path)
+df_test_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv"
+X_train = pd.read_csv(X_train_path)
+y_train = pd.read_csv(y_train_path)
+X_test = pd.read_csv(X_test_path)
+y_test = pd.read_csv(y_test_path)
 df_train = pd.read_csv(df_train_path)
+df_test = pd.read_csv(df_test_path)
 
-X_train = df_train.drop(columns=['case_name', 'RoI'])
-y_train = df_train["RoI"]
-X_test = df_test.drop(columns=['case_name', 'RoI'])
-y_test = df_test["RoI"]
-
-
-#重回帰分析では説明変数が複数存在するため、説明変数を標準化する
-scaler = StandardScaler()
-X_train_sc = scaler.fit_transform(X_train)
-
-# 標準化されたデータを新しいデータフレームに格納
-scaled_X_train = pd.DataFrame(X_train_sc, columns=X_train.columns)
-scaled_X_test = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
-
-#csvファイルとして出力
-scaled_X_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/scaled_X_train.csv",encoding='utf_8_sig', index=False)
-scaled_X_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/scaled_X_test.csv",encoding='utf_8_sig', index=False)
 
 #モデルの作成と適用
 model = linear_model.LinearRegression()
-model.fit(scaled_X_train, y_train)
+model.fit(X_train, y_train)
 
 #予測の実行
-y_test_pred = model.predict(scaled_X_test)
-y_train_pred = model.predict(scaled_X_train)
+y_test_pred = model.predict(X_test)
+y_train_pred = model.predict(X_train)
 
 # print('回帰係数')
 # print(model.coef_)
@@ -53,19 +42,6 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
 df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/Error Evaluation.csv",encoding='utf_8_sig', index=False)
-# #決定係数について
-# print('R^2(決定係数)')
-# print(r2_score(y_test, y_test_pred))
-# #RMSE(二乗平均平方根誤差)について
-# print('RMSE(二乗平均平方根誤差)')
-# print(np.sqrt(mean_squared_error(y_test, y_test_pred)))
-# #MSE(平均二乗誤差)について
-# print('MSE(平均二乗誤差)')
-# print(mean_squared_error(y_test, y_test_pred))
-# #MAE(平均絶対誤差)について
-# print('MAE(平均絶対誤差)')
-# print(mean_absolute_error(y_test, y_test_pred))
-
 
 # 図を作成するための準備
 df_train_forfig = df_train[["case_name", "RoI"]]
@@ -77,7 +53,6 @@ df_test_forfig['residuals'] = df_test_forfig['predict values'] - df_test_forfig[
 # print(df_train_forfig)
 
 #'legend'列を追加(凡例)
-
 root_directory = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"
 for folder_name in os.listdir(root_directory):  
     for index,row in df_train_forfig.iterrows() :           #１行ずつ実行
