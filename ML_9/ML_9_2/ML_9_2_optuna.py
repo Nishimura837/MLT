@@ -1,5 +1,6 @@
-# 多項式回帰分析、k分割交差検証
+# 多項式回帰分析、k分割交差検証、optunaを使用
 import pandas as pd
+import optuna
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -24,33 +25,35 @@ y_test = pd.read_csv(y_test_path)
 df_train = pd.read_csv(df_train_path)
 df_test = pd.read_csv(df_test_path)
 
-#k分割交差検証によってハイパーパラメータ(degree)を決定する
-print('start cross_val')
-degrees = list(range(1, 4))  # 1から3の多項式次数を試す
+# optunaを使ってk回交差検証を行う-------------------------
+def objective(trial, x, y, cv):     #trial(探索範囲の指定用のクラス),x(説明変数),y(目的関数),k(k分割のk)
+        #ハイパーパラメータごとに探索範囲を指定
+        degree = trial.suggest_int('degree', 1, 10)
 
-best_degree = None
-best_score = -np.inf
+        #学習に使用するアルゴリズムを指定
+        polynomial_features= PolynomialFeatures(degree=degree)
+        
+        #学習の実行、検証結果の表示
+        print('Current_params : ', trial.params)
+        accuracy = cross_val_score(polynomial_features, x, y, cv=cv).mean()
+        return accuracy
 
-for degree in degrees:
-    model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    scores = cross_val_score(model, X_train , y_train, cv=10, scoring='r2')  # 10分割交差検証でR-squaredスコアを計算
-    mean_score = scores.mean()  # 10分割の平均スコアを計算
+# studyオブジェクトの作成(最大化)
+study = optuna.create_study(direction='maximize')
+# k分割交差検証のk
+cv = 10
+#目的関数の最適化
+study.optimize(lambda trial: objective(trial, X_train, y_train, cv))
+print('best trial')
+print(study.best_trial)
+print('best params')
+print(study.best_params)
+#---------------------------------------------------------
 
-    print(degree)
-
-    if mean_score > best_score:
-        best_score = mean_score
-        best_degree = degree
-
-print('end cross_val')
-print('best degree')
-print(best_degree)
-
-# 多項式回帰を行う
-polynomial_features= PolynomialFeatures(degree=best_degree)
-x_train_poly = polynomial_features.fit_transform(X_train)
-x_test_poly = polynomial_features.transform(X_test)
-
+# 最適なハイパーパラメータを設定したモデルの定義
+best_model = PolynomialFeatures(**study.best_params)
+x_train_poly = best_model.fit_transform(X_train)
+x_test_poly = best_model.transform(X_test)
 
 #モデルの適合
 model = LinearRegression()
@@ -65,4 +68,3 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
 df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation 9_2.csv",encoding='utf_8_sig', index=False)
-

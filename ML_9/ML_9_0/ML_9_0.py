@@ -36,8 +36,8 @@ for folder_name in os.listdir(root_directory):
 #作成されたすべてのデータフレームの名前を取得
 df_names = [var_name for var_name in globals() if isinstance(globals()[var_name], pd.DataFrame)]
 # #データフレームの名前を表示
-# for name in df_names:
-#     print(name)
+for name in df_names:
+    print(name)
 
 
 #countfrom2secpatientAverage.csvをデータフレームとして読み込む
@@ -65,11 +65,11 @@ dfc = df_count_from2sec
 #dfcに'office_name'列を追加
 for folder_name in os.listdir(root_directory):
     for index,row in dfc.iterrows() :
-        if folder_name in row['casename']:                  #casenameに'folder_nameが含まれているかどうか
-            dfc.at[index, 'office_name'] = folder_name
+        if folder_name + '_' in row['casename']:                  #casenameに'folder_nameが含まれているかどうか
+            dfc.at[index, 'office_name'] = folder_name  #office1よりさきにoffice14,15,16が来たりすると、office14なのにoffice1に更新されてしまう
 
 # print(dfc)
-
+dfc.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_0/dfc.csv",encoding='utf_8_sig', index=False)
 # 各オフィス名に対する色を 'tab20' カラーマップから取得
 office_names = dfc['office_name'].unique()      #unique()メソッドは指定した列内の一意の値の配列を返す（重複を取り除く）
 colors = plt.cm.tab20(range(len(office_names))) #tab20から配列office_namesの長さ分の色の配列colorsを返す
@@ -88,6 +88,7 @@ dfc.plot.scatter(x='RoI', y='office_name', c=dfc['office_num'])
 plt.title('RoI for each office')
 #plt.show()
 plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_0/RoI for each office.pdf", format='pdf')       
+
 
 
 # casename,case_name列をキーにしてinputdataとdfcのRoI列を結合
