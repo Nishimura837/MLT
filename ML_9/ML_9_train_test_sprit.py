@@ -16,9 +16,9 @@ for folder_name in os.listdir(root_directory):
         globals()[df_name] = pd.read_csv(csv_file_path)
         #カテゴリ変数である"exhaust"を[Label Encoding]により数値化する
         #"exhaust"の値に応じて、"a"なら"0"、"b"なら1、"off"なら"2"に変換する
-        globals()[df_name].loc[globals()[df_name]['exhaust'] == "a", 'exhaust'] = 0
-        globals()[df_name].loc[globals()[df_name]['exhaust'] == "b", 'exhaust'] = 1
-        globals()[df_name].loc[globals()[df_name]['exhaust'] == "off", 'exhaust'] = 2
+        globals()[df_name].loc[globals()[df_name]['exhaust'] == "a", 'exhaust'] = 1
+        globals()[df_name].loc[globals()[df_name]['exhaust'] == "b", 'exhaust'] = 2
+        globals()[df_name].loc[globals()[df_name]['exhaust'] == "off", 'exhaust'] = 3
 
         #'aircon_position_x', 'aircon_position_y'の列があった場合にその列を削除する
         #今回は片方があればどちらも存在するから片方の条件で両方削除する
@@ -40,12 +40,17 @@ for name in df_names:
     # 名前を使用してデータフレームにアクセス
     name = globals()[name]  #組み込み関数の globals() を呼び出すと、グローバルスコープに定義されている関数、変数のディクショナリを取得できる
     globals()[df_name] = pd.merge(name, dfc, left_on='case_name', right_on='casename', how='left')
-    globals()[df_name] = globals()[df_name].drop(columns=['casename'])
+    globals()[df_name] = globals()[df_name].drop(columns=['casename','num_drop','volume[ml]'])
     # print(globals()[df_name])
-    print(globals()[df_name].shape)
+    # print(globals()[df_name].shape)
+    # csv_name = df_name + '.csv'
+    # csv_save_path = folder_path = os.path.join(root_directory, csv_name)
+    # globals()[df_name].to_csv(csv_save_path, encoding='utf_8_sig', index=False)
+
 
     #作成されたすべてのデータフレームの名前を取得
 df_names = [var_name for var_name in globals() if isinstance(globals()[var_name], pd.DataFrame)]
+print(df_names)
     # 'R' を含むデータフレームの名前を格納するリストを初期化
 R_names = []
 for variable_name in df_names:
@@ -60,10 +65,10 @@ for df_name in R_names:
     df = globals()[df_name]  # データフレーム名からデータフレームを取得
     df_list.append(df)
 
-X =  pd.concat(df_list, axis=0, ignore_index=True)
+X = pd.concat(df_list, axis=0, ignore_index=True)
 
     ##トレーニングデータとテストデータに分割する（office10をテストデータ、他はトレーニングデータ）
-    #casenameにoffice10を含む行を抽出
+    #case_nameにoffice10を含む行を抽出
 condition1 = X['case_name'].str.contains('office10')
 df_test = X[condition1]
 condition2 = ~X['case_name'].str.contains('office10')
@@ -93,3 +98,11 @@ df_X_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_test.csv",en
 y_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_test.csv",encoding='utf_8_sig', index=False)
 df_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv",encoding='utf_8_sig', index=False)
 df_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv",encoding='utf_8_sig', index=False)
+
+# # 標準化しない場合
+# X_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_train.csv", encoding='utf_8_sig', index=False)
+# y_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_train.csv", encoding='utf_8_sig', index=False)
+# X_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_test.csv",encoding='utf_8_sig', index=False)
+# y_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/y_test.csv",encoding='utf_8_sig', index=False)
+# df_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_train.csv",encoding='utf_8_sig', index=False)
+# df_test.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/df_test.csv",encoding='utf_8_sig', index=False)

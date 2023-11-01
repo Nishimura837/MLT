@@ -30,8 +30,8 @@ model.fit(X_train, y_train)
 #予測の実行
 y_test_pred = model.predict(X_test)
 y_train_pred = model.predict(X_train)
-print(y_test_pred)
-print(y_train_pred)
+# print(y_test_pred)
+# print(y_train_pred)
 # print('回帰係数')
 # print(model.coef_)
 
@@ -43,24 +43,22 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
 df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/Error Evaluation.csv",encoding='utf_8_sig', index=False)
 
 # 図を作成するための準備
-df_train_forfig = df_train
-df_train_forfig['predict values'] = y_train_pred
-df_train_forfig['residuals'] = df_train_forfig['predict values'] - df_train_forfig['RoI']
-df_test_forfig = df_test
-df_test_forfig['predict values'] = y_test_pred
-df_test_forfig['residuals'] = df_test_forfig['predict values'] - df_test_forfig['RoI']
+df_train['predict values'] = y_train_pred
+df_train['residuals'] = df_train['predict values'] - df_train['RoI']
+df_test['predict values'] = y_test_pred
+df_test['residuals'] = df_test['predict values'] - df_test['RoI']
 
 
-#'legend'列を追加(凡例)
+#df_trainに'legend'列を追加(凡例)
 root_directory = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"
 for folder_name in os.listdir(root_directory):  
-    for index,row in df_train_forfig.iterrows() :           #１行ずつ実行
-        if folder_name in row['case_name']:                 #case_nameに'folder_nameが含まれているかどうか
-            df_train_forfig.loc[index,'legend'] = 'Training:' + folder_name
+    for index,row in df_train.iterrows() :           #１行ずつ実行
+        if folder_name + '_' in row['case_name']:                 #case_nameにfolder_nameが含まれているかどうか
+            df_train.loc[index,'legend'] = 'Training:' + folder_name
 
-df_test_forfig['legend'] = 'Test data'
+df_test['legend'] = 'Test data'
 
-df_forfig = pd.concat([df_train_forfig, df_test_forfig])
+df_forfig = pd.concat([df_train, df_test])
 df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig.csv"\
                         ,encoding='utf_8_sig', index=False)
 

@@ -20,9 +20,9 @@ for folder_name in os.listdir(root_directory):
 
         #カテゴリ変数である"exhaust"を[Label Encoding]により数値化する
         #"exhaust"の値に応じて、"a"なら"0"、"b"なら1、"off"なら"2"に変換する
-        globals()[df_name].loc[globals()[df_name]['exhaust'] == "a", 'exhaust'] = 0
-        globals()[df_name].loc[globals()[df_name]['exhaust'] == "b", 'exhaust'] = 1
-        globals()[df_name].loc[globals()[df_name]['exhaust'] == "off", 'exhaust'] = 2
+        globals()[df_name].loc[globals()[df_name]['exhaust'] == "a", 'exhaust'] = 1
+        globals()[df_name].loc[globals()[df_name]['exhaust'] == "b", 'exhaust'] = 2
+        globals()[df_name].loc[globals()[df_name]['exhaust'] == "off", 'exhaust'] = 3
 
         #'aircon_position_x', 'aircon_position_y'の列があった場合にその列を削除する
         #今回は片方があればどちらも存在するから片方の条件で両方削除する
@@ -97,7 +97,7 @@ for name in df_names:
     # 名前を使用してデータフレームにアクセス
     name = globals()[name]  #組み込み関数の globals() を呼び出すと、グローバルスコープに定義されている関数、変数のディクショナリを取得できます
     globals()[df_name] = pd.merge(name, dfc, left_on='case_name', right_on='casename', how='left')
-    globals()[df_name] = globals()[df_name].drop(columns=['casename'])
+    globals()[df_name] = globals()[df_name].drop(columns=['casename','num_drop','volume[ml]'])
     # print(globals()[df_name])
     # print(globals()[df_name].shape)
 
