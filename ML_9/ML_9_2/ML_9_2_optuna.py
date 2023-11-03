@@ -29,34 +29,34 @@ rmses = []
 
 # optunaを使ってk回交差検証を行う-------------------------
 def objective(trial):
-        # 調整したいハイパーパラメータについて範囲を指定
-        param = {'degree':trial.suggest_int('degree', 1, 7)}
+    # 調整したいハイパーパラメータについて範囲を指定
+    param = {'degree':trial.suggest_int('degree', 1, 7)}
 
-        # KFoldのオブジェクトを作成
-        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
+    # KFoldのオブジェクトを作成
+    kf = KFold(n_splits=folds, shuffle=True, random_state=42)
 
-        #KFold CV
-        for train_index, valid_index in kf.split(X_train):
-                model_P = PolynomialFeatures(**param)
-                Poly_X = model_P.fit_transform(X_train)
+    #KFold CV
+    for train_index, valid_index in kf.split(X_train):
+        model_P = PolynomialFeatures(**param)
+        Poly_X = model_P.fit_transform(X_train)
 
-                model_L = LinearRegression()
-                model_L.fit(Poly_X, y_train)
-                y_train_pred = model_L.predict(Poly_X)
+        model_L = LinearRegression()
+        model_L.fit(Poly_X, y_train)
+        y_train_pred = model_L.predict(Poly_X)
 
-                # RMSEを算出
-                temp_rmse_valid = np.sqrt(mean_squared_error(y_train, y_train_pred))
+        # RMSEを算出
+        temp_rmse_valid = np.sqrt(mean_squared_error(y_train, y_train_pred))
 
-                # RMSEをリストにappend
-                rmses.append(temp_rmse_valid)
+        # RMSEをリストにappend
+        rmses.append(temp_rmse_valid)
 
-                # CVのRMSEの平均値を目的関数として返す
-                return np.mean(rmses)
-#---------------------------------------------------------
+        # CVのRMSEの平均値を目的関数として返す
+        return np.mean(rmses)
 
 folds = 10
 study = optuna.create_study(direction='minimize')
 study.optimize(objective, n_trials=30)
+#---------------------------------------------------------
 
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)

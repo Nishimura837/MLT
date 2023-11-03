@@ -25,8 +25,31 @@ df_train = pd.read_csv(df_train_path)
 df_test = pd.read_csv(df_test_path)
 
 
+#------k分割交差検証を行う------------------------------
+degrees = [1,2,3,4,5,6]
+best_degree = None
+best_score = -float('inf')  # 初期値をマイナス無限大に設定
+for degree in degrees:
+    polynomial_features= PolynomialFeatures(degree=degree)
+    x_train_poly = polynomial_features.fit_transform(X_train)
+
+    # 交差検証
+    scores = cross_val_score(LinearRegression(), x_train_poly, y_train, cv = 10)
+    # 各分割におけるスコア
+    print('Cross-Validation scores: {}'.format(scores))
+    # スコアの平均値
+    avg_score = np.mean(scores)
+    # 最高スコアを更新
+    if avg_score > best_score:
+        best_score = avg_score
+        best_degree = degree 
+
+print('best_score', best_score)
+print('best_degree', best_degree)
+#-------------------------------------------------------
+
 # 多項式回帰を行う
-polynomial_features= PolynomialFeatures(degree=5)
+polynomial_features= PolynomialFeatures(degree=best_degree)
 x_train_poly = polynomial_features.fit_transform(X_train)
 x_test_poly = polynomial_features.transform(X_test)
 

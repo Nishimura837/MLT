@@ -113,7 +113,7 @@ df_forfig = pd.concat([df_train, df_test])
 df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/df_forfig_Lasso.csv"\
                         ,encoding='utf_8_sig', index=False)
 
-#図の作成
+#-----Error Evaluation (+test) Ridge.pdfの作成--------------------
 # 各オフィス名に対する色を 'tab20' カラーマップから取得
 legend_names = df_forfig['legend'].unique()      #unique()メソッドは指定した列内の一意の値の配列を返す（重複を取り除く）
 # print(legend_names)
@@ -141,49 +141,51 @@ handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, \
 plt.legend(handles=handles, loc='upper left')
 
 
-plt.title('Error Evaluation optuna')
+plt.title('Error Evaluation Lasso')
 plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (+test) Lasso.pdf", format='pdf') 
 # plt.show()
+#-------------------------------------------------------------------------------
 
 
 
+#-----Error Evaluation (except test) Lasso.pdfの作成-----------------------------
+# # 各オフィス名に対する色を 'tab20' カラーマップから取得
+# legend_names = df_train['legend'].unique()      #unique()メソッドは指定した列内の一意の値の配列を返す（重複を取り除く）
+# # print(legend_names)
+# colors = plt.cm.tab20(range(len(legend_names))) #tab20から配列legemd_namesの長さ分の色の配列colorsを返す
+# # 凡例名と色の対応を辞書に格納
+# # zip関数は２つ以上のリストを取り、それらの対応する要素をペアにしてイテレータを返す。
+# #この場合、legend_namesとcolorsの２つのリストをペアにし、対応する要素同士を取得する。
+# # =以降はofficeをキーとしてそれに対応するcolorが"値"として格納される辞書を作成
+# legend_color_mapping = {legend: color for legend, color in zip(legend_names, colors)}
+# # print(legend_color_mapping)
+# # 'legend' 列を数値（色情報に対応する数値）に変換
+# # 'legend_num'　を追加
+# df_train['legend_num'] = df_train['legend'].map(legend_color_mapping)
+# #散布図を作成
+# df_train.plot.scatter(x='predict values', y='residuals', c=df_train['legend_num'])
+# #y=0の直線を引く
+# # y = 0 の直線を描く
+# plt.axhline(y=0, color='black', linestyle='-')
 
-#図の作成
-# 各オフィス名に対する色を 'tab20' カラーマップから取得
-legend_names = df_train['legend'].unique()      #unique()メソッドは指定した列内の一意の値の配列を返す（重複を取り除く）
-# print(legend_names)
-colors = plt.cm.tab20(range(len(legend_names))) #tab20から配列legemd_namesの長さ分の色の配列colorsを返す
-# 凡例名と色の対応を辞書に格納
-# zip関数は２つ以上のリストを取り、それらの対応する要素をペアにしてイテレータを返す。
-#この場合、legend_namesとcolorsの２つのリストをペアにし、対応する要素同士を取得する。
-# =以降はofficeをキーとしてそれに対応するcolorが"値"として格納される辞書を作成
-legend_color_mapping = {legend: color for legend, color in zip(legend_names, colors)}
-# print(legend_color_mapping)
-# 'legend' 列を数値（色情報に対応する数値）に変換
-# 'legend_num'　を追加
-df_train['legend_num'] = df_train['legend'].map(legend_color_mapping)
-#散布図を作成
-df_train.plot.scatter(x='predict values', y='residuals', c=df_train['legend_num'])
-#y=0の直線を引く
-# y = 0 の直線を描く
-plt.axhline(y=0, color='black', linestyle='-')
+# # 凡例を作成
+# handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, \
+#                         markersize=10, label=legend) for legend, color in zip(legend_names, colors)]
 
-# 凡例を作成
-handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, \
-                        markersize=10, label=legend) for legend, color in zip(legend_names, colors)]
-
-# 凡例を表示
-plt.legend(handles=handles, loc='upper left')
-
-
-plt.title('Error Evaluation optuna')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (except test) Lasso.pdf", format='pdf') 
-# plt.show()
+# # 凡例を表示
+# plt.legend(handles=handles, loc='upper left')
 
 
-df_test.plot.scatter(x='predict values', y='residuals', c='r',)
-# y = 0 の直線を描く
-plt.axhline(y=0, color='black', linestyle='-')
-plt.title('Error Evaluation optuna (testdata)')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (test) Lasso.pdf", format='pdf') 
-# plt.show()
+# plt.title('Error Evaluation optuna')
+# plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (except test) Lasso.pdf", format='pdf') 
+# # plt.show()
+#-------------------------------------------------------------------------------------
+
+#------Error Evaluation (test) Lasso.pdfの作成----------------------------------------
+# df_test.plot.scatter(x='predict values', y='residuals', c='r',)
+# # y = 0 の直線を描く
+# plt.axhline(y=0, color='black', linestyle='-')
+# plt.title('Error Evaluation optuna (testdata)')
+# plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (test) Lasso.pdf", format='pdf') 
+# # plt.show()
+#---------------------------------------------------------------------------------------

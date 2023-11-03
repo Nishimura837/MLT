@@ -69,7 +69,7 @@ legend_names = df_forfig['legend'].unique()      #unique()メソッドは指定�
 colors = plt.cm.tab20(range(len(legend_names))) #tab20から配列legemd_namesの長さ分の色の配列colorsを返す
 # 凡例名と色の対応を辞書に格納
 # zip関数は２つ以上のリストを取り、それらの対応する要素をペアにしてイテレータを返す。
-#この場合、legend_namesとcolorsの２つのリストをペアにし、対応する要素同士を取得する。
+# この場合、legend_namesとcolorsの２つのリストをペアにし、対応する要素同士を取得する。
 # =以降はofficeをキーとしてそれに対応するcolorが"値"として格納される辞書を作成
 legend_color_mapping = {legend: color for legend, color in zip(legend_names, colors)}
 # print(legend_color_mapping)
