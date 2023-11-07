@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import matplotlib.cm as cm  # カラーマップのインポート
 #csvファイルの読み込み
 
 
@@ -50,7 +50,7 @@ key_column = 'case_name'
 merged_df = pd.merge(combined_df, df_cfp, how = 'left', on = key_column)
 #指定の列を削除
 merged_df = merged_df.drop(columns = ['num_drop', 'volume[ml]'])
-merged_df.to_csv('merged.csv', index = False) #csvファイルの出力
+merged_df.to_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_0/merged.csv", index = False) #csvファイルの出力
 
 #ヒートマップの作成
 start_col = 'aircon'
@@ -62,9 +62,60 @@ plt.figure(figsize=(10, 10))
 sns.heatmap(correlation_matrix, square=True, cbar=True, annot=None, cmap='Blues')
 plt.show()
 
+def get_office_name(case_name):
+    name_parts = case_name.split('_',2)  # _で分割
+    if len(name_parts) > 0:
+        return name_parts[0]
+    else:
+        return case_name  # 分割できない場合は元の行名を返す
+
+#データをオフィスごとにプロット
+merged_df['office_name'] = merged_df['case_name'].map(get_office_name)
+#plt.legend()
+#plt.show()
+merged_df.to_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_0/merged_plus.csv", index = False) #csvファイルの出力
+
+def set_color(i):
+    if i == 'office1':
+        return "b"  # blue
+    elif i == 'office2':
+        return "g"  # green
+    elif i == 'office3':
+        return "r"  # red
+    elif i == 'office4':
+        return "c" 
+    elif i == 'office5':
+        return "m" 
+    elif i == 'office6':
+        return "y" 
+    elif i == 'office7':
+        return "k" 
+    elif i == 'office8':
+        return "tomato"  
+    elif i == 'office9':
+        return "gold" 
+    elif i == 'office10':
+        return "silver" 
+    elif i == 'office14':
+        return "violet" 
+    elif i == 'office15':
+        return "crimson"  
+    elif i == 'office16':
+        return "lightgreen"  
+    elif i == 'office22':
+        return "orange" 
+    elif i == 'office28':
+        return "cornsilk" 
+      
+color_list = list(map(set_color, merged_df['office_name']))
+plt.scatter(merged_df['RoI'], merged_df['office_name'], c = color_list)
+
+plt.show() 
+
 #トレーニングデータとテストデータの分割
 df_train = merged_df[~merged_df['case_name'].str.contains('office10')] #指定したキーワードのつく行を削除
-df_train.to_csv('df_train.csv', index = False)
+df_train = df_train.drop(columns = ['office_name'])
+df_train.to_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/df_train.csv", index = False)
 
 df_test = merged_df[merged_df['case_name'].str.contains('office10')] #指定したキーワードのつく行だけを残す
-df_test.to_csv('df_test.csv', index = False)
+df_test.to_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/df_test.csv", index = False)
