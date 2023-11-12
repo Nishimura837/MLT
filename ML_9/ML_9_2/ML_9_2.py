@@ -30,7 +30,7 @@ degrees = [1,2,3,4,5,6]
 best_degree = None
 best_score = -float('inf')  # 初期値をマイナス無限大に設定
 for degree in degrees:
-    polynomial_features= PolynomialFeatures(degree=degree)
+    polynomial_features= PolynomialFeatures(degree=degree, interaction_only=True)
     x_train_poly = polynomial_features.fit_transform(X_train)
 
     # 交差検証
@@ -49,7 +49,7 @@ print('best_degree', best_degree)
 #-------------------------------------------------------
 
 # 多項式回帰を行う
-polynomial_features= PolynomialFeatures(degree=best_degree)
+polynomial_features= PolynomialFeatures(degree=best_degree, interaction_only=True)
 x_train_poly = polynomial_features.fit_transform(X_train)
 x_test_poly = polynomial_features.transform(X_test)
 
@@ -92,7 +92,7 @@ for folder_name in os.listdir(root_directory):
 df_test['legend'] = 'Test data'
 
 df_forfig = pd.concat([df_train, df_test])
-df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig.csv"\
+df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig_k.csv"\
                         ,encoding='utf_8_sig', index=False)
 
 #図の作成
@@ -124,7 +124,7 @@ plt.legend(handles=handles, loc='upper left')
 
 
 plt.title('Error Evaluation')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (+test).pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (+test) k.pdf", format='pdf') 
 # plt.show()
 
 #図の作成
@@ -156,5 +156,5 @@ plt.legend(handles=handles, loc='upper left')
 
 
 plt.title('Error Evaluation')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (except test).pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (except test) k.pdf", format='pdf') 
 # plt.show()

@@ -2,9 +2,9 @@
 import pandas as pd
 import optuna
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
-from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score, KFold
 import os
 # 評価指標のインポート
 import numpy as np
@@ -25,49 +25,38 @@ X_test = pd.read_csv(X_test_path)
 y_test = pd.read_csv(y_test_path)
 df_train = pd.read_csv(df_train_path)
 df_test = pd.read_csv(df_test_path)
-rmses = []
 
-# optunaを使ってk回交差検証を行う-------------------------
+# optunaを使ってk分割交差検証を行う-------------------------
 def objective(trial):
-        # 調整したいハイパーパラメータについて範囲を指定
-        param1 = {'degree':trial.suggest_int('degree', 1, 4)}
-        param2 = {'alpha':trial.suggest_float('alpha', 0, 20, step=0.1)}
+    # 調整したいハイパーパラメータについて範囲を指定
+    param = {'degree':trial.suggest_int('degree', 1, 4)}
 
-        # KFoldのオブジェクトを作成
-        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
+    # 学習に使用するアルゴリズムを指定
+    model_P = PolynomialFeatures(**param, interaction_only=True)
 
-        #KFold CV
-        for train_index, valid_index in kf.split(X_train):
-                model_P = PolynomialFeatures(**param1, interaction_only=True)
-                Poly_X = model_P.fit_transform(X_train)
+    # データを変換
+    Poly_X = model_P.fit_transform(X_train)
 
-                model_R = Ridge(**param2)
-                model_R.fit(Poly_X, y_train)
-                y_train_pred = model_R.predict(Poly_X)
+    # k分割交差検証を実行
+    kf = KFold(n_splits=10, shuffle=True, random_state=42)
+    scores = cross_val_score(LinearRegression(), Poly_X, y_train, cv=kf, scoring='neg_mean_squared_error')
 
-                # RMSEを算出
-                temp_rmse_valid = np.sqrt(mean_squared_error(y_train, y_train_pred))
+    # 評価指標の平均を計算
+    score = -np.mean(scores)    # 平均二乗誤差を最小化するためにマイナスをかけて符の値で出てきている平均二乗誤差を正の値に変換している
+                                # 基本的には最大化問題であるため、平均二乗誤差を符の値で算出するが、optunaは最小化問題を解くことを前提としているため、
+                                # マイナスをかけることで最小化問題にしている
+    return score
 
-                # RMSEをリストにappend
-                rmses.append(temp_rmse_valid)
+study = optuna.create_study(direction='minimize')   # 最小化問題として設定
+study.optimize(objective, n_trials=30)              # 試行回数を調整
 
-                # CVのRMSEの平均値を目的関数として返す
-                return np.mean(rmses)
+best_degree = study.best_params['degree']
 #---------------------------------------------------------
-
-folds = 10
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=804)
 
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)
-degree = study.best_trial.params['degree']
+degree = list(study.best_trial.params.values())[0]
 print('degree:', degree)
-alpha = study.best_trial.params['alpha']
-print('alpha:', alpha)
-df_param = pd.DataFrame({'degree': [degree],'alpha' : [alpha]})
-df_param.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/param Ridge.csv", encoding='utf_8_sig', index=False)
-
 # 最適なハイパーパラメータを設定したモデルの定義
 best_model = PolynomialFeatures(degree=degree, interaction_only=True)
 best_model.fit(X_train)
@@ -76,7 +65,7 @@ X_test_poly = best_model.transform(X_test)
 
 
 #モデルの適合
-model = Ridge(alpha=alpha)
+model = LinearRegression()
 model.fit(X_train_poly, y_train)
 y_train_pred = model.predict(X_train_poly)
 y_test_pred = model.predict(X_test_poly)
@@ -88,13 +77,13 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
-df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation 9_3 Ridge.csv",encoding='utf_8_sig', index=False)
+df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation 9_2 sub.csv",encoding='utf_8_sig', index=False)
 
-# df_ee_train = pd.DataFrame({'R^2(決定係数)': [r2_score(y_train, y_train_pred)],
-#                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_train, y_train_pred))],
-#                         'MSE(平均二乗誤差)': [mean_squared_error(y_train, y_train_pred)],
-#                         'MAE(平均絶対誤差)': [mean_absolute_error(y_train, y_train_pred)]})
-# df_ee_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation for traindata 9_3 Ridge.csv",encoding='utf_8_sig', index=False)
+df_ee_train = pd.DataFrame({'R^2(決定係数)': [r2_score(y_train, y_train_pred)],
+                        'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_train, y_train_pred))],
+                        'MSE(平均二乗誤差)': [mean_squared_error(y_train, y_train_pred)],
+                        'MAE(平均絶対誤差)': [mean_absolute_error(y_train, y_train_pred)]})
+df_ee_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation for traindata 9_2 sub.csv",encoding='utf_8_sig', index=False)
 
 # 図を作成するための準備
 df_train['predict values'] = y_train_pred
@@ -113,10 +102,10 @@ for folder_name in os.listdir(root_directory):
 df_test['legend'] = 'Test data'
 
 df_forfig = pd.concat([df_train, df_test])
-# df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/df_forfig_Ridge.csv"\
-#                         ,encoding='utf_8_sig', index=False)
+df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig_sub.csv"\
+                        ,encoding='utf_8_sig', index=False)
 
-#-----Error Evaluation (+test) Ridge.pdfの作成--------------------
+#図の作成
 # 各オフィス名に対する色を 'tab20' カラーマップから取得
 legend_names = df_train['legend'].unique()      #unique()メソッドは指定した列内の一意の値の配列を返す（重複を取り除く）
 # print(legend_names)
@@ -147,7 +136,6 @@ handles[-1] = plt.Line2D([0], [0] ,marker='x', color='black', markersize=6, labe
 plt.legend(handles=handles, loc='upper left', fontsize=6)
 
 
-plt.title('Error Evaluation Ridge')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (+test) Ridge.pdf", format='pdf') 
+plt.title('Error Evaluation optuna')
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (+test) optuna sub.pdf", format='pdf') 
 # plt.show()
-#-----------------------------------------------------------------------------

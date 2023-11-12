@@ -13,7 +13,7 @@ y = 2 * X**2 - 3 * X + 1 + np.random.randn(100, 1)
 degree = 2
 
 # 多項式回帰モデルを作成
-model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
+model = make_pipeline(PolynomialFeatures(degree, interaction_only=True), LinearRegression())
 model.fit(X, y)
 
 # 予測値を計算

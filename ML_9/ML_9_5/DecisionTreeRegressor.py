@@ -1,12 +1,12 @@
-# 線形重回帰分析
-import pandas as pd
+# 回帰木分析
+from sklearn.tree import DecisionTreeRegressor
+import pandas as pd 
+import optuna
+from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
-# 線形モデル
-from sklearn.linear_model import LinearRegression
 # 評価指標のインポート
 import numpy as np
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-import os
 
 #test.csv,train.csvを取得
 X_train_path = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/X_train.csv"
@@ -21,26 +21,52 @@ X_test = pd.read_csv(X_test_path)
 y_test = pd.read_csv(y_test_path)
 df_train = pd.read_csv(df_train_path)
 df_test = pd.read_csv(df_test_path)
+rmses = []
+# optunaを使ってｋ回交差検証によりパラメータのチューニングをする
+def objective(trial):
+    # 調整したいハイパーパラメータについて範囲を指定
+    param = {'max_depth': trial.suggest_int('max_depth', 1, 10)}
 
+    # KFoldのオブジェクトを作成
+    kf = KFold(n_splits=folds, shuffle=True, random_state=42)
 
-#モデルの作成と適用
-model = LinearRegression()
-model.fit(X_train, y_train)
+    # KFold CV
+    for trial_index, valid_index in kf.split(X_train):
+        model_T = DecisionTreeRegressor(**param, criterion='squared_error', splitter='best', random_state=42)
+        model_T.fit(X_train, y_train)
+        y_train_pred = model_T.predict(X_train)
 
-#予測の実行
-y_test_pred = model.predict(X_test)
-y_train_pred = model.predict(X_train)
-# print(y_test_pred)
-# print(y_train_pred)
-# print('回帰係数')
-# print(model.coef_)
+        # RMSEを算出
+        temp_rmse_valid = np.sqrt(mean_squared_error(y_train, y_train_pred))
+
+        # RMSEをリストにappend
+        rmses.append(temp_rmse_valid)
+
+        # CVのRMSEの平均値を目的関数として返す
+        return np.mean(rmses)
+
+folds = 10
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials=10)
+print('Number of finalized trials:', len(study.trials))
+print('Best trial:', study.best_trial.params)
+
+max_depth = study.best_trial.params['max_depth']
+print('max_depth', max_depth)
+tree = DecisionTreeRegressor(max_depth=max_depth, criterion='squared_error', splitter='best', random_state=42)
+tree.fit(X_train, y_train)
+y_train_pred = tree.predict(X_train)
+y_test_pred = tree.predict(X_test)
+print('y_test_pred', y_test_pred)
+print('R^2 test =', r2_score(y_test, y_test_pred))
+print('R^2 train =', r2_score(y_train_pred, y_train))
 
 #各種評価指標をcsvファイルとして出力する
 df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
-df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/Error Evaluation.csv",encoding='utf_8_sig', index=False)
+df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/Error Evaluation 9_4 DTR.csv",encoding='utf_8_sig', index=False)
 
 # 図を作成するための準備
 df_train['predict values'] = y_train_pred
@@ -52,15 +78,17 @@ df_test['residuals'] = df_test['predict values'] - df_test['RoI']
 #df_trainに'legend'列を追加(凡例)
 root_directory = "/home/gakubu/デスクトップ/ML_git/MLT/ML_9/"
 for folder_name in os.listdir(root_directory):  
-    for index,row in df_train.iterrows() :           #１行ずつ実行
-        if folder_name + '_' in row['case_name']:                 #case_nameにfolder_nameが含まれているかどうか
-            df_train.loc[index,'legend'] = 'Training:' + folder_name
+        for index,row in df_train.iterrows() :           #１行ずつ実行
+                if folder_name + '_' in row['case_name']:                 #case_nameにfolder_nameが含まれているかどうか
+                        df_train.loc[index,'legend'] = 'Training:' + folder_name
 
 df_test['legend'] = 'Test data'
+
 df_forfig = pd.concat([df_train, df_test])
-df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig.csv"\
-                        ,encoding='utf_8_sig', index=False)
-#図の作成
+# df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/df_forfig DTR.csv"\
+#                         ,encoding='utf_8_sig', index=False)
+
+#-----Error Evaluation (+test) DTR.pdfの作成-------------------------------------------
 # 各オフィス名に対する色を 'tab20' カラーマップから取得
 legend_names = df_train['legend'].unique()      #unique()メソッドは指定した列内の一意の値の配列を返す（重複を取り除く）
 # print(legend_names)
@@ -91,8 +119,7 @@ handles[-1] = plt.Line2D([0], [0] ,marker='x', color='black', markersize=6, labe
 plt.legend(handles=handles, loc='upper left', fontsize=6)
 
 
-plt.title('Error Evaluation')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/Error Evaluation.pdf", format='pdf') 
+plt.title('Error Evaluation ElasticNet')
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/Error Evaluation (+test) DTR.pdf", format='pdf') 
 # plt.show()
-
-
+#-----------------------------------------------------------------------------------
