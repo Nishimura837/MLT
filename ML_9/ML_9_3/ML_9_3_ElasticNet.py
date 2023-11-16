@@ -40,25 +40,30 @@ def objective(trial):
         #KFold CV
         for train_index, valid_index in kf.split(X_train):
                 model_P = PolynomialFeatures(**param1, interaction_only=True)
-                Poly_X = model_P.fit_transform(X_train)
+                Poly_X_train = model_P.fit_transform(X_train.loc[train_index])
+                y_train_subset = y_train.loc[train_index]
+                Poly_X_valid = model_P.transform(X_train.loc[valid_index])
+                y_valid_subset = y_train.loc[valid_index]
 
                 model_E = ElasticNet(**param2)
-                model_E.fit(Poly_X, y_train)
-                y_train_pred = model_E.predict(Poly_X)
+                model_E.fit(Poly_X_train, y_train_subset)
+                y_valid_pred = model_E.predict(Poly_X_valid)
 
                 # RMSEを算出
-                temp_rmse_valid = np.sqrt(mean_squared_error(y_train, y_train_pred))
+                temp_rmse_valid = np.sqrt(mean_squared_error(y_valid_subset, y_valid_pred))
 
                 # RMSEをリストにappend
                 rmses.append(temp_rmse_valid)
 
-                # CVのRMSEの平均値を目的関数として返す
-                return np.mean(rmses)
+        # CVのRMSEの平均値を目的関数として返す
+        return np.mean(rmses)
 #---------------------------------------------------------
 
 folds = 10
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=81204)
+search_space = {'degree':np.arange(1, 5), 'alpha':np.arange(0, 21, 1), 'l1_ratio':np.arange(0, 1.1, 0.1)}
+study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+        # 4* 21* 11 = 924通り
+study.optimize(objective)
 
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)

@@ -57,8 +57,9 @@ def objective(trial):
     return np.mean(rmses)
 
 folds = 10
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=30)
+search_space = {'degree': range(1, 5)}
+study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+study.optimize(objective)
 #---------------------------------------------------------
 
 print('Number of finalized trials:', len(study.trials))
@@ -85,13 +86,13 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
-df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation 9_2 modified.csv",encoding='utf_8_sig', index=False)
+df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation 9_2.csv",encoding='utf_8_sig', index=False)
 
 df_ee_train = pd.DataFrame({'R^2(決定係数)': [r2_score(y_train, y_train_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_train, y_train_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_train, y_train_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_train, y_train_pred)]})
-df_ee_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation for traindata 9_2 modified.csv",encoding='utf_8_sig', index=False)
+df_ee_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation for traindata 9_2.csv",encoding='utf_8_sig', index=False)
 
 # 図を作成するための準備
 df_train['predict values'] = y_train_pred
@@ -110,7 +111,7 @@ for folder_name in os.listdir(root_directory):
 df_test['legend'] = 'Test data'
 
 df_forfig = pd.concat([df_train, df_test])
-df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig modified.csv"\
+df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_1/df_forfig.csv"\
                         ,encoding='utf_8_sig', index=False)
 
 #図の作成
@@ -145,5 +146,5 @@ plt.legend(handles=handles, loc='upper left', fontsize=6)
 
 
 plt.title('Error Evaluation optuna')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (+test) optuna modified.pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_2/Error Evaluation (+test) optuna.pdf", format='pdf') 
 # plt.show()

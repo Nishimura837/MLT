@@ -1,10 +1,11 @@
-# 回帰木分析
-from sklearn.tree import DecisionTreeRegressor
+# XGBoostによる勾配ブースティング回帰
+import xgboost as xgb
 import pandas as pd 
 import optuna
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 import os
+
 # 評価指標のインポート
 import numpy as np
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
@@ -22,11 +23,20 @@ X_test = pd.read_csv(X_test_path)
 y_test = pd.read_csv(y_test_path)
 df_train = pd.read_csv(df_train_path)
 df_test = pd.read_csv(df_test_path)
+
 rmses = []
 # optunaを使ってｋ回交差検証によりパラメータのチューニングをする
 def objective(trial):
     # 調整したいハイパーパラメータについて範囲を指定
-    param = {'max_depth': trial.suggest_int('max_depth', 1, 10)}
+    param = {
+        'booster' : 'gbtree',
+        'silent' : 0,
+        'n_estimator' : trial.suggest_int('n_estimator', 100, 1000),
+        'eta': trial.suggest_uniform('eta', 0.01, 0.3),
+        'gamma' : trial.suggest_uniform('gamma', 0, 100),   
+        'max_depth': trial.suggest_int('max_depth', 1, 10),
+        'lambda': trial.suggest_uniform('lambda', 0.7, 2)
+    }
 
     # KFoldのオブジェクトを作成
     kf = KFold(n_splits=folds, shuffle=True, random_state=42)
@@ -38,9 +48,16 @@ def objective(trial):
         X_valid_subset = X_train.loc[valid_index]
         y_valid_subset = y_train.loc[valid_index]
 
-        model_T = DecisionTreeRegressor(**param, criterion='squared_error', splitter='best', random_state=42)
-        model_T.fit(X_train_subset, y_train_subset)
-        y_valid_pred = model_T.predict(X_valid_subset)
+        # XGBoostを実行するために特殊なmatrixに変換
+        dtrain = xgb.DMatrix(X_train_subset, label=y_train_subset)
+        dvalid = xgb.DMatrix(X_valid_subset, label=y_valid_subset)
+
+        # watchlist = [(dtrain, 'train'), (dvalid, 'valid')]
+
+        # XGBoostのモデル作成と予測
+        model_X = xgb.train(param, dtrain, num_round)
+
+        y_valid_pred = model_X.predict(dvalid)
 
         # RMSEを算出
         temp_rmse_valid = np.sqrt(mean_squared_error(y_valid_subset, y_valid_pred))
@@ -48,32 +65,67 @@ def objective(trial):
         # RMSEをリストにappend
         rmses.append(temp_rmse_valid)
 
-    # CVのRMSEの平均値を目的関数として返す
-    return np.mean(rmses)
+        # CVのRMSEの平均値を目的関数として返す
+        return np.mean(rmses)
 
 folds = 10
-search_space = {'max_depth':np.arange(1, 11)}
+num_round = 30
+# ------------------------------------
+search_space = {
+        'n_estimator' : np.arange(100, 1100, 100),
+        'eta': np.arange(0.01, 0.31, 0.01),
+        'gamma' : np.arange(0, 100.1, 0.1),   
+        'max_depth': np.arange(1, 11, 1),
+        'lambda': np.arange(0.7, 2.1, 0.1),
+        }
 study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
 study.optimize(objective)
+# ------------------------------------
+
+# ------------------------------------
+# study = optuna.create_study(direction='minimize')
+# study.optimize(objective, n_trials=30)
+# ------------------------------------
+
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)
 
 max_depth = study.best_trial.params['max_depth']
 print('max_depth', max_depth)
-tree = DecisionTreeRegressor(max_depth=max_depth, criterion='squared_error', splitter='best', random_state=42)
-tree.fit(X_train, y_train)
-y_train_pred = tree.predict(X_train)
-y_test_pred = tree.predict(X_test)
+
+
+# XGBoostを実行するために特殊なmatrixに変換
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dtest = xgb.DMatrix(X_test, label=y_test)
+
+watchlist = [(dtrain, 'train'), (dtest, 'valid')]
+
+param = {
+        'booster' : 'gbtree',
+        'silent' : 0,
+        'n_estimator' : study.best_trial.params['n_estimator'],
+        'eta': study.best_trial.params['eta'],
+        'gamma' : study.best_trial.params['gamma'],   
+        'max_depth': study.best_trial.params['max_depth'],
+        'lambda': study.best_trial.params['lambda'],
+}
+
+# XGBoostのモデル作成と予測
+model_X = xgb.train(param, dtrain, num_round, evals=watchlist)
+
+y_test_pred = model_X.predict(dtest)
+y_train_pred = model_X.predict(dtrain)
 print('y_test_pred', y_test_pred)
 print('R^2 test =', r2_score(y_test, y_test_pred))
 print('R^2 train =', r2_score(y_train_pred, y_train))
+
 
 #各種評価指標をcsvファイルとして出力する
 df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
-df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/Error Evaluation 9_4 DTR.csv",encoding='utf_8_sig', index=False)
+df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation 9_5 XGB.csv",encoding='utf_8_sig', index=False)
 
 # 図を作成するための準備
 df_train['predict values'] = y_train_pred
@@ -92,7 +144,7 @@ for folder_name in os.listdir(root_directory):
 df_test['legend'] = 'Test data'
 
 df_forfig = pd.concat([df_train, df_test])
-# df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/df_forfig DTR.csv"\
+# df_forfig.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/df_forfig XGB.csv"\
 #                         ,encoding='utf_8_sig', index=False)
 
 #-----Error Evaluation (+test) DTR.pdfの作成-------------------------------------------
@@ -126,7 +178,7 @@ handles[-1] = plt.Line2D([0], [0] ,marker='x', color='black', markersize=6, labe
 plt.legend(handles=handles, loc='upper left', fontsize=6)
 
 
-plt.title('Error Evaluation DTR')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) DTR.pdf", format='pdf') 
+plt.title('Error Evaluation XGB')
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) XBG.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------------

@@ -44,23 +44,29 @@ def objective(trial):
 
         #KFold CV
         for train_index, valid_index in kf.split(X_train):
+                X_train_subset = X_train.loc[train_index]
+                y_train_subset = y_train.loc[train_index]
+                X_valid_subset = X_train.loc[valid_index]
+                y_valid_subset = y_train.loc[valid_index]
 
                 model_S = SVR(**param)
-                model_S.fit(X_train, y_train)
-                y_train_pred = model_S.predict(X_train)
+                model_S.fit(X_train_subset, y_train_subset)
+                y_valid_pred = model_S.predict(X_valid_subset)
 
                 # RMSEを算出
-                temp_rmse_valid = np.sqrt(mean_squared_error(y_train, y_train_pred))
+                temp_rmse_valid = np.sqrt(mean_squared_error(y_valid_subset, y_valid_pred))
 
                 # RMSEをリストにappend
                 rmses.append(temp_rmse_valid)
 
-                # CVのRMSEの平均値を目的関数として返す
-                return np.mean(rmses)
+        # CVのRMSEの平均値を目的関数として返す
+        return np.mean(rmses)
 
 folds = 10
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=21824)
+search_space = {'exponentC':np.arange(-5, 11), 'exponentE':np.arange(-10, 1), \
+                'exponentG':np.arange(-20, 11), 'kernel': ['linear', 'sigmoid', 'rbf']}
+study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+study.optimize(objective)
 
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)
@@ -88,7 +94,7 @@ y_test_pred = model.predict(X_test)
 # print('y_test_pred', y_test_pred)
 
 #各種評価指標をcsvファイルとして出力する
-df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
+df_ee = pd.DataFrame({  'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
