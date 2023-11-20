@@ -23,16 +23,16 @@ kf = KFold(n_splits=10, shuffle=True, random_state=42)
 def objective(trial):
     # ハイパーパラメータの探索範囲
     degree = trial.suggest_int('degree', 1, 4)
-    alpha = trial.suggest_float('alpha', 0, 20, step=0.01)
+    alpha = trial.suggest_float('alpha', 0, 20, step=0.1)
 
     # k分割交差検証の実行
-    mse_scores = []
+    rmse_scores = []
 
     for train_index, val_index in kf.split(X_train):
         X_train_fold, X_val_fold = X_train.loc[train_index], X_train.loc[val_index]
         y_train_fold, y_val_fold = y_train.loc[train_index], y_train.loc[val_index]
 
-        poly = PolynomialFeatures(degree=degree)
+        poly = PolynomialFeatures(degree=degree, interaction_only=True)
         X_poly_train_fold = poly.fit_transform(X_train_fold)
 
         lasso = Lasso(alpha=alpha)
@@ -41,11 +41,11 @@ def objective(trial):
         X_poly_val_fold = poly.transform(X_val_fold)
         y_pred = lasso.predict(X_poly_val_fold)
 
-        mse_fold = mean_squared_error(y_val_fold, y_pred)
-        mse_scores.append(mse_fold)
+        rmse_fold = np.sqrt(mean_squared_error(y_val_fold, y_pred))
+        rmse_scores.append(rmse_fold)
 
     # 平均二乗誤差の平均を目的関数とする
-    return np.mean(mse_scores)
+    return np.mean(rmse_scores)
 
 
 # Optunaで最適なハイパーパラメータの探索
@@ -128,5 +128,6 @@ plt.xlabel('Predict values')
 plt.ylabel('Residuals')
 plt.axhline(y=0, c='k')
 plt.legend()
+plt.title('lasso')
 plt.savefig("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_3/ML_9_3_lasso.png")
 plt.show()

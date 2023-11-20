@@ -1,14 +1,13 @@
 import optuna
-import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import PolynomialFeatures
+import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_absolute_error
+from optuna.samplers import GridSampler
+from sklearn.model_selection import KFold
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
+# データの読み込みや前処理が必要な場合はここで行う
 X_train = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/X_train_sc.csv")
 y_train = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/y_train.csv")
 X_test = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/X_test_sc.csv")
@@ -17,65 +16,57 @@ df_train = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/df_train
 df_test = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/df_test.csv")
 
 
+# k分割交差検証のためのKFold
 kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
 
 def objective(trial):
-    # ハイパーパラメータの探索範囲
-    degree = trial.suggest_int('degree', 1, 4)
-    alpha = trial.suggest_float('alpha', 0, 20, step=0.1)
+    # ハイパーパラメータのサンプリング
+    C = trial.suggest_float('C', 1e-3, 1e3)
+    gamma = trial.suggest_float('gamma', 1e-3, 1e3)
+    epsilon = trial.suggest_float('epsilon', 1e-3, 1e1)
 
-    # k分割交差検証の実行
+    # SVRモデルの構築
+    svr = SVR(C=C, gamma=gamma, epsilon=epsilon)
+
+    # 交差検証の実行
     rmse_scores = []
+    for train_idx, val_idx in kf.split(X_train):
+        X_fold_train, X_fold_val = X_train.loc[train_idx], X_train.loc[val_idx]
+        y_fold_train, y_fold_val = y_train.loc[train_idx], y_train.loc[val_idx]
 
-    for train_index, val_index in kf.split(X_train):
-        X_train_fold, X_val_fold = X_train.loc[train_index], X_train.loc[val_index]
-        y_train_fold, y_val_fold = y_train.loc[train_index], y_train.loc[val_index]
-
-        poly = PolynomialFeatures(degree=degree, interaction_only=True)
-        X_poly_train_fold = poly.fit_transform(X_train_fold)
-
-        ridge = Ridge(alpha=alpha)
-        ridge.fit(X_poly_train_fold, y_train_fold)
-
-        X_poly_val_fold = poly.transform(X_val_fold)
-        y_pred = ridge.predict(X_poly_val_fold)
-
-        rmse_fold = np.sqrt(mean_squared_error(y_val_fold, y_pred))
+        svr.fit(X_fold_train, y_fold_train)
+        y_pred = svr.predict(X_fold_val)
+        rmse_fold = np.sqrt(mean_squared_error(y_fold_val, y_pred))
         rmse_scores.append(rmse_fold)
 
-    # 平均二乗誤差の平均を目的関数とする
-    return np.mean(rmse_scores)
+    # 目的関数（最小化したい指標）の計算
+    rmse = np.mean(rmse_scores)
+    return rmse
 
 
-# Optunaで最適なハイパーパラメータの探索
-search_space = {'degree': range(1, 5), 'alpha': np.arange(0, 20.1, 0.1)}
-study = optuna.create_study(
-    sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+# Optunaによるハイパーパラメータの最適化(GridSamplerを使用)
+sampler = optuna.samplers.GridSampler(
+    {'C': np.arange(0.1, 1, 10), 'gamma': np.arange(0.01, 0.1, 1), 'epsilon': np.arange(0.01, 0.1, 1)})
+study = optuna.create_study(direction='minimize', sampler=sampler)
 study.optimize(objective)
 
-# 結果の表示
-print("Best trial:")
-trial = study.best_trial
-print("  Value: {:.4f}".format(trial.value))
-print("  Params: {}".format(trial.params))
+# 最適なハイパーパラメータでのSVRモデルのトレーニング
+best_params = study.best_params
+best_svr = SVR(**best_params)
+best_svr.fit(X_train, y_train)
 
-# 最も精度の良いモデルで全トレーニングデータを用いて再学習
-best_degree = trial.params['degree']
-best_alpha = trial.params['alpha']
+# テストデータに対する予測
+y_test_pred = best_svr.predict(X_test)
+y_train_pred = best_svr.predict(X_train)
 
-poly = PolynomialFeatures(degree=best_degree)
-X_train_poly = poly.fit_transform(X_train)
-
-ridge = Ridge(alpha=best_alpha)
-ridge.fit(X_train_poly, y_train)
-
-# テストデータでの予測と評価
-X_test_poly = poly.transform(X_test)
-y_train_pred = ridge.predict(X_train_poly)
-y_test_pred = ridge.predict(X_test_poly)
+# モデルの評価
 mse = mean_squared_error(y_test, y_test_pred)
-print("Test MSE:", mse)
+r2 = r2_score(y_test, y_test_pred)
+
+print(f'Mean Squared Error: {mse}')
+print(f'R^2 Score: {r2}')
+print(f'Best Hyperparameters: {best_params}')
 
 df_er = pd.DataFrame({'r2(決定係数)': [r2_score(y_test, y_test_pred)],
                      'RMSE(平方平均二乗誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
@@ -83,7 +74,7 @@ df_er = pd.DataFrame({'r2(決定係数)': [r2_score(y_test, y_test_pred)],
                       'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
 
 df_er.to_csv(
-    "/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_3/df_er_redge.csv", index=False)
+    "/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_4/df_er.csv", index=False)
 
 # データに予測値と誤差を追加
 df_train['Predict values'] = y_train_pred
@@ -128,6 +119,6 @@ plt.xlabel('Predict values')
 plt.ylabel('Residuals')
 plt.axhline(y=0, c='k')
 plt.legend()
-plt.title('ridge')
-plt.savefig("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_3/ML_9_3_ridge.png")
+plt.title('lasso')
+plt.savefig("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_4/ML_9_4.png")
 plt.show()
