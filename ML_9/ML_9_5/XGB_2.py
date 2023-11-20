@@ -47,7 +47,7 @@ def objective(trial):
         X_valid_subset = X_train.loc[valid_index]
         y_valid_subset = y_train.loc[valid_index]
 
-        model_X = xgb.XGBRegressor(**param)
+        model_X = xgb.XGBRegressor(booster= 'gbtree', **param)
         model_X.fit(X_train_subset, y_train_subset)
 
         y_valid_pred = model_X.predict(X_valid_subset)
@@ -90,6 +90,7 @@ subsample = study.best_trial.params['subsample']
 print('subsample', subsample)
 
 model_X = xgb.XGBRegressor(
+    booste='gbtree',
     n_estimators=n_estimators,
     gamma=gamma,
     max_depth=max_depth,
