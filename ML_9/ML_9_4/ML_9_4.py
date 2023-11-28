@@ -22,9 +22,9 @@ kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
 def objective(trial):
     # ハイパーパラメータのサンプリング
-    C = trial.suggest_float('C', 1e-3, 1e3)
-    gamma = trial.suggest_float('gamma', 1e-3, 1e3)
-    epsilon = trial.suggest_float('epsilon', 1e-3, 1e1)
+    C = trial.suggest_float('C', 0.1, 1.0, step=0.1)
+    gamma = trial.suggest_float('gamma', 0.1, 1.0, step=0.1)
+    epsilon = trial.suggest_float('epsilon', 0.1, 1.0, step=0.1)
 
     # SVRモデルの構築
     svr = SVR(C=C, gamma=gamma, epsilon=epsilon)

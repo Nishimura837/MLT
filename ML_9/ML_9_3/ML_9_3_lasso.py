@@ -64,7 +64,7 @@ print("  Params: {}".format(trial.params))
 best_degree = trial.params['degree']
 best_alpha = trial.params['alpha']
 
-poly = PolynomialFeatures(degree=best_degree)
+poly = PolynomialFeatures(degree=best_degree, interaction_only=True)
 X_train_poly = poly.fit_transform(X_train)
 
 lasso = Lasso(alpha=best_alpha)

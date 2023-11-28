@@ -24,7 +24,7 @@ def objective(trial):
     # ハイパーパラメータの探索範囲
     degree = trial.suggest_int('degree', 1, 4)
     alpha = trial.suggest_float('alpha', 0, 20, step=0.1)
-    l1_ratio = trial.suggest_float('l1_ratio', 0, 1, step=0.01)
+    l1_ratio = trial.suggest_float('l1_ratio', 0, 1, step=0.1)
 
     # k分割交差検証の実行
     rmse_scores = []
@@ -51,7 +51,7 @@ def objective(trial):
 
 # Optunaで最適なハイパーパラメータの探索
 search_space = {'degree': range(1, 5), 'alpha': np.arange(
-    0, 20.1, 0.1), 'l1_ratio': np.arange(0.01, 1.0, 0.01)}
+    0, 20.1, 0.1), 'l1_ratio': np.arange(0.1, 1.0, 0.1)}
 study = optuna.create_study(
     sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
 study.optimize(objective)
@@ -66,7 +66,7 @@ print("  Params: {}".format(trial.params))
 best_degree = trial.params['degree']
 best_alpha = trial.params['alpha']
 best_l1_ratio = trial.params['l1_ratio']
-poly = PolynomialFeatures(degree=best_degree)
+poly = PolynomialFeatures(degree=best_degree, interaction_only=True)
 X_train_poly = poly.fit_transform(X_train)
 
 elasticnet = ElasticNet(alpha=best_alpha, l1_ratio=best_l1_ratio)

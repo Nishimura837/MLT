@@ -1,13 +1,12 @@
 import optuna
-import numpy as np
-import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_absolute_error
+
 
 X_train = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/X_train_sc.csv")
 y_train = pd.read_csv("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/y_train.csv")
@@ -22,60 +21,56 @@ kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
 def objective(trial):
     # ハイパーパラメータの探索範囲
-    degree = trial.suggest_int('degree', 1, 4)
-    alpha = trial.suggest_float('alpha', 0, 20, step=0.1)
+    n_estimators = trial.suggest_int('n_estimators', 10, 1000, step=10)
+    max_depth = trial.suggest_int('max_depth', 1, 10)
 
-    # k分割交差検証の実行
+    # クロスバリデーションによる評価
     rmse_scores = []
+    for train_idx, val_idx in kf.split(X_train):
+        X_train_fold, X_val_fold = X_train.loc[train_idx], X_train.loc[val_idx]
+        y_train_fold, y_val_fold = y_train.loc[train_idx], y_train.loc[val_idx]
 
-    for train_index, val_index in kf.split(X_train):
-        X_train_fold, X_val_fold = X_train.loc[train_index], X_train.loc[val_index]
-        y_train_fold, y_val_fold = y_train.loc[train_index], y_train.loc[val_index]
+        # 決定木回帰モデルの定義
+        rf_regressor = RandomForestRegressor(
+            n_estimators=n_estimators, max_depth=max_depth, criterion='squared_error', random_state=42)
+        # モデルの学習
+        rf_regressor.fit(X_train_fold, y_train_fold)
 
-        poly = PolynomialFeatures(degree=degree, interaction_only=True)
-        X_poly_train_fold = poly.fit_transform(X_train_fold)
+        # バリデーションデータに対する予測
+        y_val_pred = rf_regressor.predict(X_val_fold)
 
-        ridge = Ridge(alpha=alpha)
-        ridge.fit(X_poly_train_fold, y_train_fold)
-
-        X_poly_val_fold = poly.transform(X_val_fold)
-        y_pred = ridge.predict(X_poly_val_fold)
-
-        rmse_fold = np.sqrt(mean_squared_error(y_val_fold, y_pred))
+        # 平均二乗誤差を評価指標とする
+        rmse_fold = np.sqrt(mean_squared_error(y_val_fold, y_val_pred))
         rmse_scores.append(rmse_fold)
 
-    # 平均二乗誤差の平均を目的関数とする
     return np.mean(rmse_scores)
 
 
-# Optunaで最適なハイパーパラメータの探索
-search_space = {'degree': range(1, 5), 'alpha': np.arange(0, 20.1, 0.1)}
-study = optuna.create_study(
-    sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-study.optimize(objective)
+# Optunaによる最適化
+sampler = TPESampler(seed=42)  # Use TPESampler instead of GridSampler
+study = optuna.create_study(direction='minimize', sampler=sampler)
+study.optimize(objective, n_trials=30)
 
-# 結果の表示
-print("Best trial:")
-trial = study.best_trial
-print("  Value: {:.4f}".format(trial.value))
-print("  Params: {}".format(trial.params))
 
-# 最も精度の良いモデルで全トレーニングデータを用いて再学習
-best_degree = trial.params['degree']
-best_alpha = trial.params['alpha']
+# 最適なハイパーパラメータの表示
+best_params = study.best_trial.params
+print("Best Parameters: ", best_params)
 
-poly = PolynomialFeatures(degree=best_degree, interaction_only=True)
-X_train_poly = poly.fit_transform(X_train)
+# 最も制度の良いモデルの取得
+best_regressor = RandomForestRegressor(
+    n_estimators=best_params['n_estimators'], max_depth=best_params['max_depth'], criterion='squared_error', random_state=42)
 
-ridge = Ridge(alpha=best_alpha)
-ridge.fit(X_train_poly, y_train)
+# 全トレーニングデータを用いたモデルの学習
+best_regressor.fit(X_train, y_train)
 
-# テストデータでの予測と評価
-X_test_poly = poly.transform(X_test)
-y_train_pred = ridge.predict(X_train_poly)
-y_test_pred = ridge.predict(X_test_poly)
-mse = mean_squared_error(y_test, y_test_pred)
-print("Test MSE:", mse)
+# テストデータに対する予測
+y_test_pred = best_regressor.predict(X_test)
+y_train_pred = best_regressor.predict(X_train)
+# テストデータに対する予測精度の評価
+mse_test = mean_squared_error(y_test, y_test_pred)
+mse_train = mean_squared_error(y_train, y_train_pred)
+print("Mean Squared Error on Test Data: ", mse_test)
+print("Mean Squared Error on Train Data: ", mse_train)
 
 df_er = pd.DataFrame({'r2(決定係数)': [r2_score(y_test, y_test_pred)],
                      'RMSE(平方平均二乗誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
@@ -83,7 +78,7 @@ df_er = pd.DataFrame({'r2(決定係数)': [r2_score(y_test, y_test_pred)],
                       'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
 
 df_er.to_csv(
-    "/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_3/df_er_redge.csv", index=False)
+    "/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_5/df_er_RandomForest.csv", index=False)
 
 # データに予測値と誤差を追加
 df_train['Predict values'] = y_train_pred
@@ -128,6 +123,6 @@ plt.xlabel('Predict values')
 plt.ylabel('Residuals')
 plt.axhline(y=0, c='k')
 plt.legend()
-plt.title('ridge')
-plt.savefig("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_3/ML_9_3_ridge.png")
+plt.title('RandomForest')
+plt.savefig("/home/gakubu/デスクトップ/MLTgit/MLT/ML_9/ML_9_5/ML_9_5_RandomForest.png")
 plt.show()
