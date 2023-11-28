@@ -156,3 +156,5 @@ plt.title('Error Evaluation Ridge')
 plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_3/Error Evaluation (+test) Ridge.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------
+
+print('Finished Ridge Regressor')

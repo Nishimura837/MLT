@@ -63,19 +63,19 @@ def objective(trial):
     
 folds = 10
 # GridSearch----------
-search_space = {
-    'n_estimators': np.arange(100, 1100, 100),
-    'exponentG': np.arange(-20, 10),
-    'max_depth': np.arange(3, 8), 
-    'subsample': np.arange(0.1, 1.1, 0.1)
-    }
-study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-study.optimize(objective)
+# search_space = {
+#     'n_estimators': np.arange(100, 1100, 100),
+#     'exponentG': np.arange(-20, 10),
+#     'max_depth': np.arange(3, 8), 
+#     'subsample': np.arange(0.1, 1.1, 0.1)
+#     }
+# study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+# study.optimize(objective)
 # --------------------  
 
 # # ベイズ最適化--------
-# study = optuna.create_study(direction='minimize')
-# study.optimize(objective, n_trials = 200)
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials = 100)
 # # --------------------
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)
@@ -164,6 +164,6 @@ plt.legend(handles=handles, loc='upper left', fontsize=6)
 
 
 plt.title('Error Evaluation XGB')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) XBG.pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) XGB2.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------------

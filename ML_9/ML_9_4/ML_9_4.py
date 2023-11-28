@@ -155,3 +155,5 @@ plt.title('Error Evaluation ElasticNet')
 plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/Error Evaluation (+test) SVR.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------------
+
+print('Finished SVR')

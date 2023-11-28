@@ -2,6 +2,7 @@
 import xgboost as xgb
 import pandas as pd 
 import optuna
+from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 import os
@@ -32,10 +33,10 @@ def objective(trial):
         'booster' : 'gbtree',
         'silent' : 0,
         'n_estimator' : trial.suggest_int('n_estimator', 100, 1000),
-        'eta': trial.suggest_uniform('eta', 0.01, 0.3),
-        'gamma' : trial.suggest_uniform('gamma', 0, 100),   
-        'max_depth': trial.suggest_int('max_depth', 1, 10),
-        'lambda': trial.suggest_uniform('lambda', 0.7, 2)
+        'eta': trial.suggest_uniform('eta', 0.01, 0.3),                 
+        'gamma' : trial.suggest_uniform('gamma', 0, 100),               
+        'max_depth': trial.suggest_int('max_depth', 1, 10),             
+        'lambda': trial.suggest_uniform('lambda', 0.7, 2)               
     }
 
     # KFoldのオブジェクトを作成
@@ -71,20 +72,21 @@ def objective(trial):
 folds = 10
 num_round = 30
 # ------------------------------------
-search_space = {
-        'n_estimator' : np.arange(100, 1100, 100),
-        'eta': np.arange(0.01, 0.31, 0.01),
-        'gamma' : np.arange(0, 100.1, 0.1),   
-        'max_depth': np.arange(1, 11, 1),
-        'lambda': np.arange(0.7, 2.1, 0.1),
-        }
-study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-study.optimize(objective)
+# search_space = {
+#         'n_estimator' : np.arange(100, 1100, 100),
+#         'eta': np.arange(0.01, 0.31, 0.01),
+#         'gamma' : np.arange(0, 100.1, 0.1),   
+#         'max_depth': np.arange(1, 11, 1),
+#         'lambda': np.arange(0.7, 2.1, 0.1),
+#         }
+# study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+# study.optimize(objective)
 # ------------------------------------
 
 # ------------------------------------
-# study = optuna.create_study(direction='minimize')
-# study.optimize(objective, n_trials=30)
+sampler = TPESampler()
+study = optuna.create_study(sampler=sampler, direction='minimize')
+study.optimize(objective, n_trials=200)
 # ------------------------------------
 
 print('Number of finalized trials:', len(study.trials))
@@ -179,6 +181,8 @@ plt.legend(handles=handles, loc='upper left', fontsize=6)
 
 
 plt.title('Error Evaluation XGB')
-plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) XBG.pdf", format='pdf') 
+plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) XGB.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------------
+
+print('Finished XGB')

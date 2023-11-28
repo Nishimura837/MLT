@@ -2,6 +2,7 @@
 from sklearn.tree import DecisionTreeRegressor
 import pandas as pd 
 import optuna
+from optuna.samplers import TPESampler
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 import os
@@ -52,9 +53,19 @@ def objective(trial):
     return np.mean(rmses)
 
 folds = 10
-search_space = {'max_depth':np.arange(1, 11)}
-study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-study.optimize(objective)
+
+# -------------------------------------------
+# search_space = {'max_depth':np.arange(1, 11)}
+# study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+# study.optimize(objective)
+# -------------------------------------------
+
+# ------------------------------------
+sampler = TPESampler(seed=42)
+study = optuna.create_study(sampler=sampler, direction='minimize')
+study.optimize(objective, n_trials=30)
+# ------------------------------------
+
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)
 
@@ -73,7 +84,7 @@ df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
                         'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
-df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_4/Error Evaluation 9_4 DTR.csv",encoding='utf_8_sig', index=False)
+df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation 9_5 DTR.csv",encoding='utf_8_sig', index=False)
 
 # 図を作成するための準備
 df_train['predict values'] = y_train_pred
@@ -130,3 +141,5 @@ plt.title('Error Evaluation DTR')
 plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) DTR.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------------
+
+print('Finished DTR')

@@ -27,7 +27,7 @@ rmses = []
 def objective(trial):
     # 調整したいハイパーパラメータについて範囲を指定
     param = {   'max_depth': trial.suggest_int('max_depth', 1, 10),
-                'n_estimators': trial.suggest_int('n_estimators', 100, 10000, step=100)
+                'n_estimators': trial.suggest_int('n_estimators', 100, 1000, step=10)
                 }
 
     # KFoldのオブジェクトを作成
@@ -37,6 +37,7 @@ def objective(trial):
     for train_index, valid_index in kf.split(X_train):
         X_train_subset = X_train.loc[train_index]
         y_train_subset = y_train.loc[train_index]
+        y_train_subset = np.ravel(y_train_subset)
         X_valid_subset = X_train.loc[valid_index]
         y_valid_subset = y_train.loc[valid_index]
 
@@ -54,9 +55,18 @@ def objective(trial):
     return np.mean(rmses)
 
 folds = 10
-search_space = {'max_depth':np.arange(1, 11), 'n_estimators':np.arange(100, 1100, 100)}
-study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
-study.optimize(objective)
+
+# -----------------------------------
+# search_space = {'max_depth':np.arange(1, 11), 'n_estimators':np.arange(100, 110, 10)}
+# study = optuna.create_study(sampler=optuna.samplers.GridSampler(search_space), direction='minimize')
+# study.optimize(objective)
+# # -----------------------------------
+
+# -----------------------------------
+study = optuna.create_study(direction='minimize')
+study.optimize(objective, n_trials=30)
+# -----------------------------------
+
 print('Number of finalized trials:', len(study.trials))
 print('Best trial:', study.best_trial.params)
 
@@ -135,3 +145,5 @@ plt.title('Error Evaluation RFR')
 plt.savefig("/home/gakubu/デスクトップ/ML_git/MLT/ML_9/ML_9_5/Error Evaluation (+test) RFR.pdf", format='pdf') 
 # plt.show()
 #-----------------------------------------------------------------------------------
+
+print('Finished RFR')
