@@ -236,14 +236,12 @@ print('Finished ML_10_trial_op3.py')
 
 
 #各種評価指標をcsvファイルとして出力する
-df_ee = pd.DataFrame({'R^2(決定係数)': [r2_score(y_test, y_test_pred)],
-                        'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_test, y_test_pred))],
+df_ee = pd.DataFrame({
                         'MSE(平均二乗誤差)': [mean_squared_error(y_test, y_test_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_test, y_test_pred)]})
 df_ee.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_10/Error Evaluation 10 trial op3.csv",encoding='utf_8_sig', index=False)
 
-df_ee_train = pd.DataFrame({'R^2(決定係数)': [r2_score(y_train, y_train_pred)],
-                        'RMSE(二乗平均平方根誤差)': [np.sqrt(mean_squared_error(y_train, y_train_pred))],
+df_ee_train = pd.DataFrame({
                         'MSE(平均二乗誤差)': [mean_squared_error(y_train, y_train_pred)],
                         'MAE(平均絶対誤差)': [mean_absolute_error(y_train, y_train_pred)]})
 df_ee_train.to_csv("/home/gakubu/デスクトップ/ML_git/MLT/ML_10/Error Evaluation 10 trial op3 train.csv",encoding='utf_8_sig', index=False)
