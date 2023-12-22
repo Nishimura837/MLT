@@ -51,7 +51,7 @@ def create_model(trial):
     if optimizer_name == 'adam':
         optimizer = Adam()
     if optimizer_name == 'sgd':
-        optimizer = SGD(learning_rate=lr)
+        optimizer = SGD()
     else:
         optimizer = 'RMSProp'
 

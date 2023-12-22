@@ -2,9 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras.preprocessing import image
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
+from keras.datasets import cifar10
+from keras.utils import to_categorical
 
 # 画像を読み込み
-img = image.load_img("/home/gakubu/ピクチャ/pxfuel.jpg", target_size=(640, 640))
+(X_train, y_train), (X_test, y_test) = cifar10.load_data()
+img = X_train[0]
 
 # 画像をnumpy配列に変換
 img_array = image.img_to_array(img)

@@ -58,8 +58,8 @@ def objective(trial):
         # RMSEをリストにappend
         rmses.append(temp_rmse_valid)
 
-        # CVのRMSEの平均値を目的関数として返す
-        return np.mean(rmses)
+    # CVのRMSEの平均値を目的関数として返す
+    return np.mean(rmses)
     
 folds = 10
 # GridSearch----------
